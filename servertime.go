@@ -1,4 +1,4 @@
-package KBUtils
+package kbutils
 
 import "time"
 

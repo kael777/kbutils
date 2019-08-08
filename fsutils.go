@@ -1,4 +1,4 @@
-package KBUtils
+package kbutils
 
 import _ "github.com/kael777/go-utils/Crypto"
 import _ "github.com/kael777/go-utils/binary"
