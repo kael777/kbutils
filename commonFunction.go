@@ -12,7 +12,18 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unsafe"
 )
+
+func Str2bytes(s string) []byte {
+	x := (*[2]uintptr)(unsafe.Pointer(&s))
+	h := [3]uintptr{x[0], x[1], x[1]}
+	return *(*[]byte)(unsafe.Pointer(&h))
+}
+
+func Bytes2str(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
+}
 
 // GeneratePIDFile 生成一个pID文件，格式：<name>.<ID>.pID
 func GeneratePIDFile(name string, id int) {
@@ -93,9 +104,8 @@ func StrToTime(str string) int64 {
 	theTime, err := time.ParseInLocation("2006-01-02 15:04:05", str, loc)
 	if err == nil {
 		return theTime.Unix()
-	} else {
-		return 0
 	}
+	return 0
 }
 
 // NextTime 当前时间下一个指定时间
