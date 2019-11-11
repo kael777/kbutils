@@ -15,6 +15,47 @@ import (
 	"unsafe"
 )
 
+// 获得这个月有多少天
+// month传入需要+1 day传入0
+func DaysOfMonth(year, month, day int) time.Time {
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+}
+
+// 获得一周的开始和结束
+func WeekRange(year, week int) (start, end time.Time) {
+	start = WeekStart(year, week)
+	end = start.AddDate(0, 0, 6)
+	return
+}
+
+// 获得一周开始的那一天,week是传入今年的第几周
+func WeekStart(year, week int) time.Time {
+	// Start from the middle of the year:
+	t := time.Date(year, 7, 1, 0, 0, 0, 0, time.UTC)
+
+	// Roll back to Monday:
+	if wd := t.Weekday(); wd == time.Sunday {
+		t = t.AddDate(0, 0, -6)
+	} else {
+		t = t.AddDate(0, 0, -int(wd)+1)
+	}
+
+	// Difference in weeks:
+	_, w := t.ISOWeek()
+	t = t.AddDate(0, 0, (week-w)*7)
+
+	return t
+}
+
+func WeekOfYear(t time.Time) int {
+	var _, wk_num = t.ISOWeek() // [ALTERNATIVE] _, wk_num := time_now.ISOWeek()
+	return wk_num
+}
+
+func TodayWeekOfYear() int {
+	return WeekOfYear(time.Now())
+}
+
 func Str2bytes(s string) []byte {
 	x := (*[2]uintptr)(unsafe.Pointer(&s))
 	h := [3]uintptr{x[0], x[1], x[1]}
