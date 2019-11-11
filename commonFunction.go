@@ -17,8 +17,8 @@ import (
 
 // 获得这个月有多少天
 // month传入需要+1 day传入0
-func DaysOfMonth(year, month, day int) time.Time {
-	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+func DaysOfMonth(year, month, day int) int {
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC).Day()
 }
 
 // 获得一周的开始和结束
