@@ -15,6 +15,17 @@ import (
 	"unsafe"
 )
 
+// 获得当前时间戳所在月开始和结束的Date
+func DayInMonth() (time.Time, time.Time) {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	return firstOfMonth, lastOfMonth
+}
+
 // 获得这个月有多少天
 // month传入需要+1 day传入0
 func DaysOfMonth(year, month, day int) int {
