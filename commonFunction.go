@@ -183,7 +183,7 @@ func LowerCasedName(name string) string {
 
 	for _, chr := range name {
 		if isUpper := 'A' <= chr && chr <= 'Z'; isUpper {
-			if firstTime == true {
+			if firstTime {
 				firstTime = false
 			} else {
 				newstr = append(newstr, '_')
