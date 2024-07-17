@@ -2,7 +2,9 @@ package kbutils
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
+	"math"
+	"math/cmplx"
 	"math/rand"
 	"net"
 	"net/http"
@@ -14,6 +16,19 @@ import (
 	"time"
 	"unsafe"
 )
+
+const m1 = 0x5555555555555555
+const m2 = 0x3333333333333333
+const m4 = 0x0f0f0f0f0f0f0f0f
+const h01 = 0x0101010101010101
+
+// 计算整数换成二进制数后有多少个1,Hamming weight algorithms
+func Popcnt(x uint64) uint64 {
+	x -= (x >> 1) & m1
+	x = (x & m2) + ((x >> 2) & m2)
+	x = (x + (x >> 4)) & m4
+	return (x * h01) >> 56
+}
 
 // 计算两个时间相差的天数
 func TimeSubDays(t1, t2 time.Time) int {
@@ -131,26 +146,57 @@ func GeneratePIDFile(name string, id int) {
 
 var r *rand.Rand
 
-// GenRandomString 生成随机字符串
-func GenRandomString(n int) string {
-	str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	bytes := []byte(str)
-	result := []byte{}
-	if r == nil {
-		r = rand.New(rand.NewSource(time.Now().Unix()))
-	}
-	for i := 0; i < n; i++ {
-		result = append(result, bytes[r.Intn(len(bytes))])
-	}
-	return string(result)
-}
-
 // GetRandomRange 生成一个1-n的随机数
 func GetRandomRange(_min, _max int) int {
 	if r == nil {
 		r = rand.New(rand.NewSource(time.Now().Unix()))
 	}
 	return r.Intn(_max-_min) + _min
+}
+
+func RandFloat(min, max float64) float64 {
+	return min + rand.Float64()*(max-min)
+}
+
+func RandFloats(min, max float64, n int) []float64 {
+	res := make([]float64, n)
+	for i := range res {
+		res[i] = min + rand.Float64()*(max-min)
+	}
+	return res
+}
+
+// RandomHash 生成随机字符串
+func RandomHash(format string, length int) string {
+	pool := ""
+
+	switch format {
+	case "alnum":
+		pool = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	case "alpSpecLower":
+		pool = "abcdefghijklmnopqrstuvwxyz-_"
+	case "alpha":
+		pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	case "alpNumLower":
+		pool = "0123456789abcdefghijklmnopqrstuvwxyz"
+	case "hexdec":
+		pool = "0123456789abcdef"
+	case "numeric":
+		pool = "0123456789"
+	case "nozero":
+		pool = "123456789"
+	default:
+		return ""
+	}
+
+	// if no seed before, you need run this : rand.Seed(time.Now().UnixNano())
+	buf := make([]byte, length)
+
+	for i := range buf {
+		buf[i] = pool[rand.Intn(len(pool))]
+	}
+
+	return string(buf)
 }
 
 // SliceRandList 生成一个随机数序列
@@ -245,7 +291,9 @@ func UpperCasedName(name string) string {
 	return string(newstr)
 }
 
-/**
+/*
+*
+
 	SendEmail 发送邮件
 	param：to 发送给谁，比如：example@example.com;example1@163.com;example2@sina.com.cn;...
 	param：user : example@example.com login smtp server user
@@ -256,7 +304,9 @@ func UpperCasedName(name string) string {
 	body: The content of mail
 	mailtyoe: mail type html or text
 	result：error 错误对象
-**/
+
+*
+*/
 func SendEmail(to string, user string, password string, host string, subject string, body string, mailtype string) error {
 	hp := strings.Split(host, ":")
 	auth := smtp.PlainAuth("", user, password, hp[0])
@@ -287,7 +337,7 @@ func BytesToUint32(buf []byte) uint32 {
 // ListDir 获取指定目录下的所有文件/文件夹，不进入下一级目录搜索，可以匹配后缀过滤。
 func ListDir(dirPth string, suffix string, fileOrDir bool) (files []string, err error) {
 	files = make([]string, 0, 10)
-	dir, err := ioutil.ReadDir(dirPth)
+	dir, err := os.ReadDir(dirPth)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +395,7 @@ func GetExternalIP() string {
 		return ""
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return ""
 	}
@@ -396,4 +446,32 @@ func CheckMapKeyAndInit(v map[int]int, key int, initValue int) {
 	if _, ok := v[key]; !ok {
 		v[key] = initValue
 	}
+}
+
+// Newton's method cube root function that hopes for
+// convergence within 20 iterations
+// 开三次方
+func Cbrt1(x complex128) complex128 {
+	var z complex128 = x
+	for i := 0; i < 20; i++ {
+		z = z - ((z*z*z - x) / (3.0 * z * z))
+	}
+	return z
+}
+
+// Newton's method cube root function that runs until stable
+func Cbrt(x complex128) complex128 {
+	var z, z0 complex128 = x, x
+	for {
+		z = z - ((z*z*z - x) / (3.0 * z * z))
+		if cmplx.Abs(z-z0) < 1e-10 {
+			break
+		}
+		z0 = z
+	}
+	return z
+}
+
+func ExtractRoot(who, num float64) float64 {
+	return math.Pow(who, 1.0/num)
 }
