@@ -1,4 +1,4 @@
-module github.com/kaellzt777/kbutils
+module github.com/kael777/kbutils
 
 go 1.22.1
 
